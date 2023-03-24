@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: second-web
+
+
+############
+# Server
+## context path of application
+server:
+  servlet:
+    context-path: /second
+  port: 9081
+
+############
+# Actuator
+#management.endpoints.web.exposure.include=info,health
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+#management.endpoints.web.exposure.exclude
+
+# prometheus enabling
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+  info:
+    git:
+      enabled: true
+      mode: simple
+
+############
+# Logging
+logging:
+  level:
+    com.example: DEBUG
+    ROOT: INFO
+

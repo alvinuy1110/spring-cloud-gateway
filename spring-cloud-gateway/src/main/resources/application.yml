@@ -1,0 +1,94 @@
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: spring-cloud-gateway
+
+  ## cloud
+  ## complete config...https://cloud.spring.io/spring-cloud-gateway/reference/html/appendix.html
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+#            allowedMethods:
+#              - GET
+      ## global
+      ### server
+      httpserver:
+        wiretap: true
+        ### client
+      httpclient:
+        wiretap: true
+        # millisecond
+        connect-timeout: 3000
+        response-timeout: 30s
+
+        ## gateway routes
+      routes:
+#        - id: baeldung_route
+#          uri: https://baeldung.com
+#          predicates:
+#            - Path=/baeldung/
+#          filters:
+#            - RewritePath=/baeldung(?<segment>/?.*), $\{segment}
+        - id: first-microservice
+          uri: http://localhost:9080/
+          predicates:
+            - Path=/first/**
+        - id: second-microservice
+          uri: http://localhost:9081/
+          predicates:
+            - Path=/second/**
+          filters:
+            - name: Retry
+              args:
+                retries: 3
+                methods: GET
+                backoff:
+                  firstBackoff: 50ms
+                  maxBackoff: 500ms
+            - name: CircuitBreaker
+              args:
+                name: fallback-service
+                fallbackUri: forward:/fallback
+
+# resiliency settings
+resilience4j:
+  circuitbreaker:
+    instances:
+      fallback-service:
+        slidingWindowSize: 10                     #unit request
+        permittedNumberOfCallsInHalfOpenState: 5  #unit request
+        failureRateThreshold: 50                  #percent
+        waitDurationInOpenState: 10000            #10 seconds
+        registerHealthIndicator: true
+  timelimiter:
+    instances:
+      fallback-service:
+        timeoutDuration: 2s
+
+#===============================
+#============================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+#        include: "info,health,prometheus,metrics,loggers,gateway"
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.http.server.reactive: DEBUG
+    org.springframework.web.reactive: DEBUG
+    org.springframework.boot.autoconfigure.web: DEBUG
+    org.springframework.cloud.gateway.handler.RoutePredicateHandlerMapping: TRACE
+    reactor.netty: INFO
+    redisratelimiter: INFO
+    ROOT: INFO
+
